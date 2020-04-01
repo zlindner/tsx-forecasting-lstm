@@ -1,0 +1,5 @@
+# project files + folders
+.vscode
+env
+.env
+__pycache__
