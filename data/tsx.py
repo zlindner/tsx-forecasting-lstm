@@ -27,7 +27,12 @@ class TSX:
             return
 
         print('TSX(): loading history (%s) for %s' % (timeframe, symbol))
-        return self.api.chartDF(symbol, timeframe)
+
+        try:
+            return self.api.chartDF(symbol, timeframe)
+        except Exception:
+            print('TSX(): an error occured while retrieving historical data')
             
+        return None
         
         
