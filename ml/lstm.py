@@ -1,6 +1,7 @@
 import tensorflow.keras as tf
 import numpy as np
 
+
 class LSTM:
 
     def __init__(self, dataset):
@@ -20,25 +21,31 @@ class LSTM:
         self.model.compile(loss='mean_squared_error', optimizer='rmsprop')
 
     def train(self, epochs):
-        self.model.fit(self.dataset.x_train, self.dataset.y_train, epochs=epochs, batch_size=32, shuffle=False)
+        self.model.fit(self.dataset.x_train,
+                       self.dataset.y_train,
+                       epochs=epochs,
+                       batch_size=32,
+                       shuffle=False)
 
     def predict(self):
         x_test = self.dataset.x_test
         y_test = self.model.predict(x_test)
 
+        print(y_test.shape)
+
         x_test = x_test.reshape((x_test.shape[0], x_test.shape[2]))
-        
+
         # invert scaling for forecast
         inv_yhat = np.concatenate((y_test, x_test[:, 1:]), axis=1)
         inv_yhat = self.dataset.scaler.inverse_transform(inv_yhat)
-        inv_yhat = inv_yhat[:,0]
-        
+        inv_yhat = inv_yhat[:, 0]
+
         # invert scaling for actual
         #test_y = test_y.reshape((len(test_y), 1))
         #inv_y = np.concatenate((test_y, x_test[:, 1:]), axis=1)
         #inv_y = self.dataset.scaler.inverse_transform(inv_y)
         #inv_y = inv_y[:,0]
-        
+
         # calculate RMSE
         rmse = sqrt(mean_squared_error(inv_y, inv_yhat))
         print('Test RMSE: %.3f' % rmse)

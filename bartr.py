@@ -5,13 +5,13 @@ from ml.lstm import LSTM
 
 # load stock data from tsx
 tsx = TSX(config)
-data = tsx.get_history('A-CV', timeframe='1y')
+data = tsx.get_history('A-CV', timeframe='3m')
 
 # create dataset from data
 dataset = Dataset(data)
 
 # create lstm
 lstm = LSTM(dataset)
-lstm.train(epochs=20)
-lstm.predict()
+#lstm.train(epochs=20)
+#lstm.predict()
 
