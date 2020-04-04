@@ -11,7 +11,6 @@ data = tsx.get_history('A-CV', timeframe='3m')
 dataset = Dataset(data)
 
 # create lstm
-lstm = LSTM(dataset)
+#lstm = LSTM(dataset)
 #lstm.train(epochs=20)
 #lstm.predict()
-

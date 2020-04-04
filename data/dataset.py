@@ -16,15 +16,16 @@ class Dataset:
         self.partition()
 
     def partition(self, test_size=0.2):
-        # convert multivariate time series data to a supervised learning format
-        data = self.multivariate_to_supervised(self.data)
-        print(data.head())
-
         # default is train 80%, test 20%
-        train_samples = round(data.shape[0] * (1 - test_size))
+        train_samples = round(self.data.shape[0] * (1 - test_size))
+
         # normalize data (squish values between 0 and 1)
-        data = self.normalize(data, train_samples)
-        print(data.shape)
+        data = self.normalize(self.data, train_samples)
+
+        # convert multivariate time series data to a supervised learning format
+        data = self.multivariate_to_supervised(data)
+
+        print(data.head())
         '''
         train = data[:train_samples, :]
         test = data[train_samples:, :]
@@ -45,7 +46,9 @@ class Dataset:
 
         # only fit on train
         self.scaler.fit(data.values[:train_samples, :])
-        return self.scaler.transform(data.values)
+        data[Dataset.FEATURES] = self.scaler.transform(data[Dataset.FEATURES])
+
+        return data
 
     def multivariate_to_supervised(self, data, prev_steps=1, forecast_steps=1):
         '''
