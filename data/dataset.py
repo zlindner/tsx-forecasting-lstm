@@ -1,6 +1,6 @@
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.model_selection import train_test_split
 
 
 # TODO add sentiment sources for given stock into same dataframe
@@ -15,78 +15,61 @@ class Dataset:
         # partition data into train/test set
         self.partition()
 
-    def partition(self, test_size=0.2):
+    def partition(self, test_size=0.2, val_size=0.0):
         # default is train 80%, test 20%
-        train_samples = round(self.data.shape[0] * (1 - test_size))
+        train_size = 1 - test_size - val_size
 
         # normalize data (squish values between 0 and 1)
-        data = self.normalize(self.data, train_samples)
+        data = self.normalize(self.data, train_size)
 
         # convert multivariate time series data to a supervised learning format
-        data = self.multivariate_to_supervised(data)
+        x, y = self.multivariate_to_supervised(data, lookback=30)
+        train_samples = round(len(x) * train_size)
 
-        print(data.head())
-        '''
-        train = data[:train_samples, :]
-        test = data[train_samples:, :]
+        # create train/val/test splits
+        if val_size > 0.0:
+            val_samples = round(self.data.shape[0] * val_size)
+            self.train_val_test_split(x, y, train_samples, val_samples)
 
-        # split into inputs and outputs
-        x_train, y_train = train[:, :-1], train[:, -1]
-        x_test, y_test = test[:, :-1], test[:, -1]
+            print('Dataset: created %s training, %s validation, %s testing samples' %
+                  (len(self.y_train), len(self.y_val), len(self.y_test)))
+        else:
+            self.x_train, self.x_test = np.array(x[:train_samples]), np.array(x[train_samples:])
+            self.y_train, self.y_test = np.array(y[:train_samples]), np.array(y[train_samples:])
 
-        # reshape input to be 3D [samples, timesteps, features]
-        x_train = x_train.reshape((x_train.shape[0], 1, x_train.shape[1]))
-        x_test = x_test.reshape((x_test.shape[0], 1, x_test.shape[1]))
-        
-        return x_train, y_train, x_test, y_test'''
+            print('Dataset: created %s training, %s testing samples' %
+                  (self.y_train.shape[0], self.y_test.shape[0]))
 
     # TODO try StandardScaler
-    def normalize(self, data, train_samples):
+    def normalize(self, data, train_size):
         self.scaler = MinMaxScaler()
 
         # only fit on train
+        train_samples = round(self.data.shape[0] * train_size)
         self.scaler.fit(data.values[:train_samples, :])
-        data[Dataset.FEATURES] = self.scaler.transform(data[Dataset.FEATURES])
+
+        data.loc[:, Dataset.FEATURES] = self.scaler.transform(data[Dataset.FEATURES])
 
         return data
 
-    def multivariate_to_supervised(self, data, prev_steps=1, forecast_steps=1):
-        '''
-        Transforms a DataFrame containing time series data into a DataFrame
-        containing data suitable for use as a supervised learning problem.
-        
-        Derived from code originally found at 
-        https://machinelearningmastery.com/convert-time-series-supervised-learning-problem-python/
-        
-        :param data: dataframe containing columns of time series values
-        :param prev_steps: the number of previous steps that will be included in the output 
-                            DataFrame corresponding to each input column
-        :param forecast_steps: the number of forecast steps that will be included in the output 
-                            DataFrame corresponding to each input column
-        :return dataframe containing original columns, renamed <orig_name>(t), as well as columns
-                            for previous steps, <orig_name>(t-1) ... <orig_name>(t-n) and 
-                            columns for forecast steps, <orig_name>(t+1) ... <orig_name>(t+n)
-        '''
+    def multivariate_to_supervised(self, data, lookback):
+        x, y = [], []
 
-        cols, names = list(), list()
+        for timepoint in range(data.shape[0] - lookback):
+            x.append(data.values[timepoint:timepoint + lookback, :])
+            y.append(data.values[timepoint + lookback, 0])
 
-        # input sequence (t-n, ... t-1)
-        for i in range(prev_steps, 0, -1):
-            cols.append(data.shift(i))
-            names += [('%s(t-%d)' % (col_name, i)) for col_name in Dataset.FEATURES]
+        return x, y
 
-        # forecast sequence (t, t+1, ... t+n)
-        for i in range(0, forecast_steps):
-            cols.append(data.shift(-i))
+    def train_val_test_split(self, x, y, train_samples, val_samples):
+        # train: start => train_samples
+        # val: train_samples => train_samples + val_samples
+        # test: train_samples + val_samples => end
 
-            if i == 0:
-                names += [('%s(t)' % col_name) for col_name in Dataset.FEATURES]
-            else:
-                names += [('%s(t+%d)' % (col_name, i)) for col_name in Dataset.FEATURES]
+        self.x_train = np.array(x[:train_samples])
+        self.x_val = np.array(x[train_samples:train_samples + val_samples])
+        self.x_test = np.array(x[train_samples + val_samples:])
 
-        # aggregate columns
-        agg = pd.concat(cols, axis=1)
-        agg.columns = names
-        agg.dropna(inplace=True)
-
-        return agg
+        self.y_train = np.array(y[:train_samples])
+        self.y_val = np.array(y[train_samples:train_samples + val_samples])
+        self.y_test = np.array(y[train_samples + val_samples:])
