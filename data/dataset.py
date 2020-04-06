@@ -3,9 +3,9 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
 
-# TODO add sentiment sources for given stock into same dataframe
 class Dataset:
 
+    # TODO add sentiment analysis at specific dates (drop rows without company news?)
     FEATURES = ['open', 'close', 'high', 'low', 'volume']
 
     def __init__(self, data):

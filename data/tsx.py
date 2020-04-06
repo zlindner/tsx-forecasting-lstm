@@ -22,7 +22,7 @@ class TSX:
         except Exception:
             print('TSX: an error occured while loading symbols')
 
-    def get_history(self, symbol, timeframe='1m'):
+    def get_history(self, symbol, timeframe):
         if symbol not in self.symbols['name']:
             print('TSX: invalid symbol')
             return
