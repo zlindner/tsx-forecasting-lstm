@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 
 
 class Dataset:
@@ -40,9 +40,8 @@ class Dataset:
             print('Dataset: created %s training, %s testing samples' %
                   (self.y_train.shape[0], self.y_test.shape[0]))
 
-    # TODO try StandardScaler
     def normalize(self, data, train_size):
-        self.scaler = MinMaxScaler()
+        self.scaler = StandardScaler()
 
         # only fit on train
         train_samples = round(self.data.shape[0] * train_size)

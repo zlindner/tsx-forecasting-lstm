@@ -1,6 +1,7 @@
 import tensorflow.keras as tf
 import numpy as np
 import os
+import matplotlib.pyplot as plt
 
 
 class LSTM:
@@ -46,9 +47,34 @@ class LSTM:
 
         model = tf.models.load_model(filename)
 
-        print('LSTM: successfully loaded \'%s\'' % filename)
+        print('LSTM: successfully loaded model from %s' % filename)
 
         y_pred = model.predict(self.dataset.x_test)
+        y_test = self.dataset.y_test
 
-        rmse = np.sqrt(np.mean((y_pred - self.dataset.y_test)**2))
+        rmse = np.sqrt(np.mean((y_pred - y_test)**2))
         print('rmse: %s' % rmse)
+
+        y_test = inverse_transform(y_test, self.dataset.scaler)
+
+        f, a = simple_ax(figsize=(10, 6))
+        a.plot(y_pred, c='b', label='predictions')
+        a.plot(y_test, c='r', label='actual')
+        a.set_ylabel('Normalized closing price')
+        a.set_xlabel('Day')
+        a.set_title('A-CV Test Set Predictions')
+        plt.legend()
+        plt.show()
+
+
+def simple_ax(figsize=(6, 4), **kwargs):
+    ''' single prettified axis '''
+    fig = plt.figure(figsize=figsize)
+    ax = fig.add_subplot(111, **kwargs)
+    return fig, ax
+
+
+def inverse_transform(normalized, scaler):
+    m = scaler.mean_[0]
+    s = scaler.scale_[0]
+    return s * np.array(normalized) + m

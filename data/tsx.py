@@ -1,4 +1,6 @@
 import pyEX
+import os
+import pandas as pd
 
 
 class TSX:
@@ -16,22 +18,40 @@ class TSX:
             exit()
 
     def load_symbols(self):
-        try:
-            self.symbols = self.api.internationalSymbolsDF(exchange='tsx')
-            print('TSX: loaded %s symbols' % self.symbols.shape[0])
-        except Exception:
-            print('TSX: an error occured while loading symbols')
+        if os.path.exists('data/tsx/symbols.csv'):
+            print('TSX: loading cached symbols from data/tsx/symbols.csv')
+            self.symbols = pd.read_csv('data/tsx/symbols.csv', index_col=0)
+        else:
+            print('TSX: loading symbols from iex')
+
+            try:
+                self.symbols = self.api.internationalSymbolsDF(exchange='tsx')
+                self.symbols.to_csv('data/tsx/symbols.csv')
+            except Exception:
+                print('TSX: an error occured while loading symbols')
+                return
+
+        print('TSX: loaded %s symbols' % self.symbols.shape[0])
 
     def get_history(self, symbol, timeframe):
         if symbol not in self.symbols['name']:
             print('TSX: invalid symbol')
             return
 
-        print('TSX: loading history (%s) for %s' % (timeframe, symbol))
+        filename = 'data/tsx/tsx-' + symbol + '-' + timeframe + '.csv'
 
+        if os.path.exists(filename):
+            print('TSX: loading cached history from %s' % filename)
+            history = pd.read_csv(filename, index_col=0)
+            return history
         try:
-            return self.api.chartDF(symbol, timeframe)
-        except Exception:
-            print('TSX: an error occured while retrieving historical data')
+            print('TSX: loading history(%s) for %s from iex' % (timeframe, symbol))
+            history = self.api.chartDF(symbol, timeframe)
+            history.to_csv(filename)
 
-        return None
+            return history
+        except Exception as err:
+            print('TSX: an error occured while retrieving historical data')
+            print(err)
+
+            return None

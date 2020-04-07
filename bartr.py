@@ -7,6 +7,9 @@ from ml.lstm import LSTM
 tsx = TSX(config)
 data = tsx.get_history('A-CV', timeframe='5y')
 
+if data is None:
+    exit()
+
 # create dataset from data
 dataset = Dataset(data)
 

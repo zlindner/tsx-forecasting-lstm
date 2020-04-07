@@ -3,9 +3,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # default config
-default_config = {
-
-}
+default_config = {}
 
 # build config
 import os
@@ -20,12 +18,14 @@ if env == 'dev':
 elif env == 'prod':
     env_config = prod_config
 
+
 def chain_configs(*config_items):
     for it in config_items:
         for element in it:
             value = element[1]
-            
+
             if value is not None:
                 yield element
+
 
 config = dict(chain_configs(*default_config.items(), env_config.items()))
