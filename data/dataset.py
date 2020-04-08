@@ -51,6 +51,11 @@ class Dataset:
 
         return data
 
+    def invert(self, normalized):
+        m = self.scaler.mean_[0]
+        s = self.scaler.scale_[0]
+        return s * np.array(normalized) + m
+
     def multivariate_to_supervised(self, data, lookback):
         x, y = [], []
 

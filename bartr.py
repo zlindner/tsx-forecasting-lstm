@@ -16,4 +16,4 @@ dataset = Dataset(data)
 # create lstm
 lstm = LSTM(dataset)
 #lstm.train(epochs=20, name='basic_lstm')
-lstm.predict('basic_lstm')
+lstm.predict('basic_lstm', plot=True)

@@ -38,7 +38,7 @@ class LSTM:
                   shuffle=False)
         model.save(filename)
 
-    def predict(self, name):
+    def predict(self, name, plot=False):
         filename = 'model/' + name + '.h5'
 
         if not os.path.exists(filename):
@@ -53,28 +53,22 @@ class LSTM:
         y_test = self.dataset.y_test
 
         rmse = np.sqrt(np.mean((y_pred - y_test)**2))
-        print('rmse: %s' % rmse)
+        print('LSTM: root mean square error = %s' % rmse)
 
-        y_test = inverse_transform(y_test, self.dataset.scaler)
+        if plot:
+            self.plot_predictions(y_pred, y_test)
 
-        f, a = simple_ax(figsize=(10, 6))
-        a.plot(y_pred, c='b', label='predictions')
-        a.plot(y_test, c='r', label='actual')
-        a.set_ylabel('Normalized closing price')
-        a.set_xlabel('Day')
-        a.set_title('A-CV Test Set Predictions')
+    def plot_predictions(self, y_pred, y_test):
+        y_test = self.dataset.invert(self.dataset.y_test)
+
+        figure = plt.figure(figsize=(10, 6))
+        axes = figure.add_subplot(111)
+
+        axes.plot(y_pred, c='b', label='predictions')
+        axes.plot(y_test, c='r', label='actual')
+        axes.set_ylabel('Normalized closing price')
+        axes.set_xlabel('Day')
+        axes.set_title('A-CV Test Set Predictions')
+
         plt.legend()
         plt.show()
-
-
-def simple_ax(figsize=(6, 4), **kwargs):
-    ''' single prettified axis '''
-    fig = plt.figure(figsize=figsize)
-    ax = fig.add_subplot(111, **kwargs)
-    return fig, ax
-
-
-def inverse_transform(normalized, scaler):
-    m = scaler.mean_[0]
-    s = scaler.scale_[0]
-    return s * np.array(normalized) + m
